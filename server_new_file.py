@@ -4,7 +4,7 @@ from Crypto.Cipher import AES
 import tqdm
 
 HOST = socket.gethostbyname(socket.gethostname())
-PORT = 1212
+PORT = 5050 # use any appropriate/unused
 ADDR = (HOST, PORT)
 FORMAT = "utf-8"
 SIZE = 1024
@@ -15,7 +15,7 @@ def main():
     server.listen()
     print("LISTENING: SERVER is listening...")
 
-    while True:
+    while True: # The infinite loop
         conn, addr = server.accept()
         print(f"NEW CONNECTION from {addr} is established.")
 
@@ -35,30 +35,29 @@ def main():
         file.write(data)
         conn.send("RECEIVED: FILE DATA.".encode(FORMAT))
 
-        '''Encryption
-        '''
+#Encryption
 
-key = b"MyNameIsUnknown1"  # setting the key
-nonce = b"MyNameIsUnknown2"
+    key = b"MyNameIsUnknown1"  # setting the key
+    nonce = b"MyNameIsUnknown2"
 
-cipher = AES.new(key, AES.MODE_EAX, nonce)  # creating cipher
-size_of_file = os.path.getsize("file")  # calculating file size we want to send
+    cipher = AES.new(key, AES.MODE_EAX, nonce)  # creating cipher
+    size_of_file = os.path.getsize("file")  # calculating file size we want to send
 
-with open("hello", "rb") as f:
-    data = f.read()  # loading data of the file in the form of bytes
+    with open("hello", "rb") as f:
+        data = f.read()  # loading data of the file in the form of bytes
 
-    encrypted = cipher.encrypt(data)  # encrypting these data and
-    client.send("hello.txt".encode())  # sending the name of the file that is going to be transmited
-    client.send(str(size_of_file).encode())  # sending file size
-    client.sendall(encrypted)  # sending all the encypted data
-    client.send(b"<END")  # telling that the file was sent fully
-    client.close()  # close communication
+        encrypted = cipher.encrypt(data)  # encrypting these data and
+        client.send("hello.txt".encode())  # sending the name of the file that is going to be transmited
+        client.send(str(size_of_file).encode())  # sending file size
+        client.sendall(encrypted)  # sending all the encypted data
+        client.send(b"<END")  # telling that the file was sent fully
+        client.close()  # close communication
 
-    file.close()
-    conn.close()
-    server.close()
-    client.close()
-    print(f"DISCONNECTED: {addr} disconnected.")
+        file.close()
+        conn.close()
+        server.close()
+        client.close()
+        print(f"DISCONNECTED: {addr} disconnected.")
 
 if __name__ == "__main__":
     main()
