@@ -1,13 +1,12 @@
 import socket
 import pickle
 from Crypto.Cipher import AES
-import tqdm
 
 HOST = socket.gethostbyname(socket.gethostname())
 PORT = 5050 # use any appropriate/unused
 ADDR = (HOST, PORT)
 FORMAT = "utf-8"
-SIZE = 1024
+SIZE = 1024 # picked bigger size
 
 def main():
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
