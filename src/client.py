@@ -2,6 +2,8 @@ import os
 import socket
 import tqdm
 
+import json
+
 # Return a string containing the hostname of the machine where the Python interpreter is currently executing.
 HOST = socket.gethostbyname("localhost")
 
@@ -80,6 +82,36 @@ def sendFileFunction(clientSocket: socket.socket(), fileName, encryptedFile, enc
             return print(f"The {fileName} was sent to the server")
 
 
+def addNewItemDictionary(newItem):
+    # Defining the Dic Path
+    dictonaryPath = "./../data/dictionary.json"
+
+    with open(dictonaryPath, 'r+') as dictonary:
+        # Reading all the content of the json
+        data = json.load(dictonary)
+
+        # Adding a new item on the json file
+        data[len(data)] = newItem
+
+        # Set the pointer to the beginning (Sets the file's current position at the offset)
+        dictonary.seek(0)
+
+        # Converting a subset of Python objects into a json string.
+        json.dump(data, dictonary, indent=4)
+
+        # Removing remaining part
+        dictonary.truncate()
+
+
+def showDictionary():
+    # Defining the Dic Path
+    dictonaryPath = "./../data/dictionary.json"
+
+    with open(dictonaryPath, 'r') as dictonary:
+        data = json.load(dictonary)
+        print(data)
+
+
 if __name__ == "__main__":
 
     # Function to check if the user wrote the file name
@@ -122,7 +154,7 @@ if __name__ == "__main__":
 
         # Creating a match system to create different cases for which input from the user
         # If the user need to send a file so it will necessary to validate if the user is sending the name of the file as well
-        if (userCommand == "sending-file"):
+        if userCommand == "sending-file":
 
             # Declaring all the variables that it will be necessary to send to the sendFile Function
             fileName = ""
@@ -175,6 +207,17 @@ if __name__ == "__main__":
             # Sending File function if the inputs from the user
             sendFileFunction(clientSocket, fileName,
                              encryptedFile, encryptContent, saveMethod)
+
+        # Command to populate the dictionary
+        if userCommand == "new-item-dic":
+            # Asking for the new item that will be implemented on the dictionary
+            newItem = input(
+                "\nAdd a new item to the dictionary: \n")
+
+            return addNewItemDictionary(newItem)
+
+        if userCommand == "show-dic":
+            return showDictionary()
 
         # Returning if the user try to type a different command
         return print("Command incorrect. Please, try it again or type help to check the commands available.")
