@@ -3,7 +3,7 @@ import socket
 import tqdm
 
 # Return a string containing the hostname of the machine where the Python interpreter is currently executing.
-HOST = socket.gethostbyname('localhost')
+HOST = socket.gethostbyname("localhost")
 
 # Defining a common PORT for the Client and Server
 PORT = 5050
@@ -37,24 +37,24 @@ def helpUser():
     return print("test help user")
 
 
-def sendFileFunction(clientSocket: socket.socket(), filename, encrypted):
+def sendFileFunction(clientSocket: socket.socket(), fileName, encryptedFile, encryptContent, saveMethod):
 
     # Defining the File Path
-    filePath = f"./../data/{filename}"
+    filePath = f"./../data/{fileName}"
 
     # Calculating the file size
     fileSize = os.path.getsize(filePath)
 
     # Defining if it is encrypted or not
-    contentFile = "ENCRYPTED" if encrypted else "TEXT"
+    contentFile = "ENCRYPTED" if encryptedFile else "TEXT"
 
     # Sending all the details about the file for the server
     clientSocket.send(
-        f"{filePath}{SEPARATOR}{fileSize}{SEPARATOR}{contentFile}".encode(FORMAT))
+        f"{filePath}{SEPARATOR}{fileSize}{SEPARATOR}{contentFile}{SEPARATOR}{encryptContent}{SEPARATOR}{saveMethod}".encode(FORMAT))
 
     # Creating a progress bar on the client side to let the user aware about the process
     progress = tqdm.tqdm(range(
-        fileSize), f"Sending {filename}", unit="B", unit_scale=True, unit_divisor=1024)
+        fileSize), f"Sending {fileName}", unit="B", unit_scale=True, unit_divisor=1024)
 
     # Opening the file and sending while it is reading the bytes
     with open(filePath, "rb") as file:
@@ -77,58 +77,112 @@ def sendFileFunction(clientSocket: socket.socket(), filename, encrypted):
             # Close the socket
             clientSocket.close()
 
-            return print(f"The {filename} was sent to the server")
+            return print(f"The {fileName} was sent to the server")
 
 
 if __name__ == "__main__":
-    client_socket = socket.socket()
 
-    # Function to check if the user implemented
+    # Function to check if the user wrote the file name
     # Function needs to return true or false
-    def checkingUserParameter(inputsFromUser):
+    def checkingFileName(inputFromUser):
+        # Checking if the input of the fileName is blank or not
+        if len(inputFromUser) == 0:
+            print("Blank options are not available. Please, try again.")
+            return False
 
-        # Checking if the length is bigger than one
-        if (len(inputsFromUser) == 2):
-            return True
+        return True
 
-        # Print message to remember the user to write the file name
-        print("Please provide the name of the file that you would like to send.")
-        return False
+    # Function to if the user is typing YES or NO as an answer
+    def checkingYesOrNoAnswers(inputFromUser):
+        # Necessary to put ".lower()" function because user can type these two inputs in differnt ways
+        match inputFromUser.lower():
+            case "yes" | "no":
+                return True
 
-    if connectServe(client_socket):
+            case _:
+                print("Only 'Yes' or 'No' answers are available.")
+                return False
+
+    # Function to check if the user is typing the correct input for the Sending File function ("print" or "save")
+    def checkingSaveMethod(inputFromUser):
+        # Necessary to put ".lower()" function because user can type these two inputs in differnt ways
+        match inputFromUser.lower():
+            case "print" | "save":
+                return True
+
+            case _:
+                print("Only 'print' or 'save' answers are available.")
+                return False
+
+    # Function to render the User Interface for the user decide what they would like to do.
+    def userInterface(clientSocket):
 
         # First command after the client is connected with the server
-        userCommand = input("Enter an input ('help' for all the commands): ")
-
-        # Split the inputs from the user command to pickup the file name
-        # example: inputsFromUser[0] is "sending-file" and inputsFromUser[1] is the <FILENAME>
-        inputsFromUser = userCommand.split(" ")
+        userCommand = input("\nEnter an input ('help' for all the commands): ")
 
         # Creating a match system to create different cases for which input from the user
         # If the user need to send a file so it will necessary to validate if the user is sending the name of the file as well
-        match inputsFromUser[0]:
+        if (userCommand == "sending-file"):
 
-            # Sending the file to the server
-            case "sending-file":
-                # Validation to check the file name
-                if (checkingUserParameter(inputsFromUser)):
-                    sendFileFunction(client_socket, inputsFromUser[1], False)
+            # Declaring all the variables that it will be necessary to send to the sendFile Function
+            fileName = ""
+            encryptedFile = False
+            encryptContent = False
+            saveMethod = ""
 
-            # Sending an encrypted file to the server
-            case "sending-file-encrypted":
+            # Asking for the file name for the user
+            fileNameCommand = input(
+                "\nPlease, inform the name of the file: \n(The file should be located at the 'data' folder) \n")
 
-                # Validation to check the file name
-                if (checkingUserParameter(inputsFromUser)):
-                    sendFileFunction(client_socket, inputsFromUser[1], True)
+            # Checking if their answer is valid or not
+            if checkingFileName(fileNameCommand) == False:
+                return
 
-            # List of the commands that users will be able to use
-            case "help":
-                helpUser()
+            # Asking if the file that they would like to send is encrypted or not
+            encryptedFileCommand = input(
+                "\nYour file is encrypeted or not?: (Yes/ No) \n")
 
-            # Any other input, will return the error message
-            case _:
-                print(
-                    "Command incorrect. Please, try it again or type help to check the commands available.")
+            # Checking if their answer is valid or not
+            if checkingYesOrNoAnswers(encryptedFileCommand) == False:
+                return
+
+            # If the file is not encrypted, so it is necessary to ask if the user would like to encrypt or not
+            if encryptedFileCommand.lower() == "no":
+                encryptContentCommand = input(
+                    "\nWould you like to encrypet your file?: (Yes/ No) \n")
+
+                # Checking if their answer is valid or not
+                if checkingYesOrNoAnswers(encryptContentCommand) == False:
+                    return
+            # Declaring that the content is encrypt
+            else:
+                encryptContentCommand = True
+
+            # Asking if the user would like to save or print their results
+            saveMethodCommand = input(
+                "\nHow do you like to save or print your final result? (print/ save) \n")
+
+            # Checking if their answer is valid or not
+            if checkingSaveMethod(saveMethodCommand) == False:
+                return
+
+            # Declaring all the variables that it will be necessary to send to the sendFile Function
+            fileName = fileNameCommand
+            saveMethod = saveMethodCommand
+            encryptedFile = True if encryptedFileCommand == "yes" else False
+            encryptContent = True if encryptContentCommand == "yes" else False
+
+            # Sending File function if the inputs from the user
+            sendFileFunction(clientSocket, fileName,
+                             encryptedFile, encryptContent, saveMethod)
+
+        # Returning if the user try to type a different command
+        return print("Command incorrect. Please, try it again or type help to check the commands available.")
+
+    clientSocket = socket.socket()
+
+    if connectServe(clientSocket):
+        userInterface(clientSocket)
 
     else:
         print("It was not possible to connect to the server. Please, try again.")
