@@ -106,10 +106,15 @@ def addNewItemDictionary(newItem):
 def showDictionary():
     # Defining the Dic Path
     dictonaryPath = "./../data/dictionary.json"
-
     with open(dictonaryPath, 'r') as dictonary:
         data = json.load(dictonary)
         print(data)
+
+
+def help():
+    # Defining 'help'
+    help_instructions = "Input 'sending-file' to send text file\n'new-item-dic' to add a new item in the dictionary\n'show-dic' to show the dictionary"
+    return print(help_instructions)
 
 
 if __name__ == "__main__":
@@ -152,6 +157,9 @@ if __name__ == "__main__":
         # First command after the client is connected with the server
         userCommand = input("\nEnter an input ('help' for all the commands): ")
 
+        if userCommand == "help":
+            return help()
+
         # Creating a match system to create different cases for which input from the user
         # If the user need to send a file so it will necessary to validate if the user is sending the name of the file as well
         if userCommand == "sending-file":
@@ -164,7 +172,7 @@ if __name__ == "__main__":
 
             # Asking for the file name for the user
             fileNameCommand = input(
-                "\nPlease, inform the name of the file: \n(The file should be located at the 'data' folder) \n")
+                "\nPlease, input the name of the file: \n(The file should be located at the 'data' folder) \n")
 
             # Checking if their answer is valid or not
             if checkingFileName(fileNameCommand) == False:
@@ -172,7 +180,7 @@ if __name__ == "__main__":
 
             # Asking if the file that they would like to send is encrypted or not
             encryptedFileCommand = input(
-                "\nYour file is encrypeted or not?: (Yes/ No) \n")
+                "\nIs your file encrypeted or not?: (Yes/ No) \n")
 
             # Checking if their answer is valid or not
             if checkingYesOrNoAnswers(encryptedFileCommand) == False:

@@ -1,2 +1,0 @@
-Maybe let's say 'hello, the world'!
-But this is NOT our first python program!!
