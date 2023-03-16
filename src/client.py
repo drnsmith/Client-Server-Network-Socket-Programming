@@ -26,9 +26,11 @@ SEPARATOR = "<SEPARATOR>"
 
 MAIN_DICTIONARY_PATH = "./../data/defaultDictionary.json"
 
-USER_DICTIONARY_XML_PATH = "./../userDictionaries/dictonary.xml"
-USER_DICTIONARY_JSON_PATH = "./../userDictionaries/dictonary.json"
-USER_DICTIONARY_BIN_PATH = "./../userDictionaries/dictonary.bin"
+USER_DICTIONARY_XML_PATH = "./../userDictionaries/dictionary.xml"
+USER_DICTIONARY_JSON_PATH = "./../userDictionaries/dictionary.json"
+USER_DICTIONARY_BIN_PATH = "./../userDictionaries/dictionary.bin"
+
+# Function to connect with the server
 
 
 def connectServe(clientSocket):
@@ -42,6 +44,8 @@ def connectServe(clientSocket):
         print('Connection failed.')
         return False
 
+# Function to encrypt files to the server
+
 
 def encryptingFile(content):
     # generate a key for encryptio and decryption
@@ -50,23 +54,23 @@ def encryptingFile(content):
     # Instance the Fernet class with the key
     fernet = Fernet(key)
 
+    # Encrypting the content
     encMessage = fernet.encrypt(content)
 
+    # Return the encrypted message
     return encMessage
 
-
-def encryptingDictionary(dictionary_path):
-    with open(dictionary_path, 'rb') as dictionary:
-        data = dictionary.read(BUFFER_SIZE)
-        encrypted_content = encryptingFile(data)
-
-        return encrypted_content
+# Function to send files to the server
 
 
-def sendFileFunction(clientSocket, file_name, encrypt_content, save_method):
+def sendFileFunction(clientSocket, file_name, encrypt_content, save_method, type):
 
     # Defining the File Path
-    filePath = f"./../data/{file_name}"
+    if type == "text":
+        filePath = f"./../data/{file_name}"
+
+    if type == "dictionary":
+        filePath = f"./../userDictionaries/{file_name}"
 
     # Calculating the file size
     fileSize = os.path.getsize(filePath)
@@ -105,6 +109,8 @@ def sendFileFunction(clientSocket, file_name, encrypt_content, save_method):
 
             return print(finalMessage)
 
+# Function to populate the dictionary
+
 
 def addNewItemDictionary(newItem):
     with open(MAIN_DICTIONARY_PATH, 'r+') as dictonary:
@@ -123,44 +129,62 @@ def addNewItemDictionary(newItem):
         # Removing remaining part
         dictonary.truncate()
 
+# Function to show the dictionary
+
 
 def showDictionary():
     with open(MAIN_DICTIONARY_PATH, 'r') as dictonary:
         data = json.load(dictonary)
         print(data)
 
+# Function to serialise the dictionary
 
-def sendingDictionary(type, encrypted):
 
+def serializingDictionary(type):
+
+    # Openning the file the dictionary that users are been populating and picking up the data
     with open(MAIN_DICTIONARY_PATH, 'r+') as dictonary:
         # Reading all the content of the default dictionary
         defaultDictionary = json.load(dictonary)
 
+    # Checking the type choosen by the user
     if type == "json":
+        # Opening the user dictionary to serialise the file
         user_dictionary = open(USER_DICTIONARY_JSON_PATH, "w")
+
+        # Writing the data from the populated dictionary and copying on the user dictionary
         json.dump(defaultDictionary, user_dictionary, indent=6)
+
+        # Closing the user dictionary after copied the content
         user_dictionary.close()
 
-        encryptingDictionary(USER_DICTIONARY_JSON_PATH)
-
     if type == "xml":
+        # Converting the data from the dictionary into xml format
         xml_content = dict2xml(
             defaultDictionary, wrap='dictionary', indent="   ")
 
+        # Opening the user dictionary to serialise the file
         user_dictionary = open(USER_DICTIONARY_XML_PATH, "w")
-        user_dictionary.write(xml_content)
-        user_dictionary.close()
 
-        encryptingDictionary(USER_DICTIONARY_XML_PATH)
+        # Writing the data from the populated dictionary and copying on the user dictionary
+        user_dictionary.write(xml_content)
+
+        # Closing the user dictionary after copied the content
+        user_dictionary.close()
 
     if type == "binary":
+        # Opening the user dictionary to serialise the file
         user_dictionary = open(USER_DICTIONARY_BIN_PATH, "wb")
+
+        # Writing the data from the populated dictionary and copying on the user dictionary
         pickle.dump(defaultDictionary, user_dictionary)
+
+        # Closing the user dictionary after copied the content
         user_dictionary.close()
 
-        encryptingDictionary(USER_DICTIONARY_BIN_PATH)
+    return print("\nSerialization completed. Check your file in the 'userDictionaries' folder.")
 
-    pass
+# Function to return all the comands available for users
 
 
 def help():
@@ -258,13 +282,14 @@ if __name__ == "__main__":
                 return
 
             # Declaring all the variables that it will be necessary to send to the sendFile Function
+            type = "text"
             file_name = file_name_command
             save_method = save_method_command
             encrypt_content = True if encrypt_content_command.lower() == "yes" else False
 
             # Sending File function if the inputs from the user
             return sendFileFunction(clientSocket, file_name,
-                                    encrypt_content, save_method)
+                                    encrypt_content, save_method, type)
 
         # Command to populate the dictionary
         if user_command == "new-item-dic":
@@ -274,25 +299,48 @@ if __name__ == "__main__":
 
             return addNewItemDictionary(new_item)
 
+        # Command to show the dictionary content
         if user_command == "show-dic":
             return showDictionary()
 
+        # Command to send the dictionary to the server
         if user_command == "sending-dictionary":
-            format_dictionary = input(
-                "\Which format you would like to serialise your dictionary? (json/ xml/ bin) \n")
 
+            # Asking for which type of file the user would like to serialise
+            format_dictionary = input(
+                "\nWhich format you would like to serialise your dictionary? (json/ xml/ bin) \n")
+
+            # Checking user input to see if matches with the options available
             if checkingSendingDictionary(format_dictionary) == False:
                 return
 
+            # Checking if the user wants to encrypt their dictionary
             encrypt_dictionary_command = input(
-                "\Do you like to encrypt your dictionary before sending to the server? (yes/ no) \n")
+                "\nDo you like to encrypt your dictionary before sending to the server? (yes/ no) \n")
 
+            # Checking if the user input is valid
             if checkingYesOrNoAnswers(encrypt_dictionary_command) == False:
                 return
 
+            # Asking if the user would like to save or print their results
+            save_method_command = input(
+                "\nHow do you like to save or print your final result? (print/ save) \n")
+
+            # Checking if their answer is valid or not
+            if checkingSaveMethod(save_method_command) == False:
+                return
+
+            # First, serialasing the dictionary
+            serializingDictionary(format_dictionary)
+
+            type = "dictionary"
+            file_name = f"dictionary.{format_dictionary}"
+            save_method = save_method_command
             encrypt_dictionary = True if encrypt_dictionary_command.lower() == "yes" else False
 
-            return sendingDictionary(format_dictionary, encrypt_dictionary)
+            # Second, sending to the server
+            return sendFileFunction(clientSocket, file_name,
+                                    encrypt_dictionary, save_method, type)
 
         # Returning if the user try to type a different command
         return print("Command incorrect. Please, try it again or type help to check the commands available.")
