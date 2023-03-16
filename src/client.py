@@ -1,6 +1,8 @@
 import os
 import socket
-import tqdm
+import pickle
+from cryptography.fernet import Fernet
+from dict2xml import dict2xml
 
 import json
 
@@ -22,6 +24,12 @@ BUFFER_SIZE = 4096
 # Defining a separator to send the file
 SEPARATOR = "<SEPARATOR>"
 
+MAIN_DICTIONARY_PATH = "./../data/defaultDictionary.json"
+
+USER_DICTIONARY_XML_PATH = "./../userDictionaries/dictonary.xml"
+USER_DICTIONARY_JSON_PATH = "./../userDictionaries/dictonary.json"
+USER_DICTIONARY_BIN_PATH = "./../userDictionaries/dictonary.bin"
+
 
 def connectServe(clientSocket):
     try:
@@ -35,43 +43,57 @@ def connectServe(clientSocket):
         return False
 
 
-def helpUser():
-    return print("test help user")
+def encryptingFile(content):
+    # generate a key for encryptio and decryption
+    key = Fernet.generate_key()
+
+    # Instance the Fernet class with the key
+    fernet = Fernet(key)
+
+    encMessage = fernet.encrypt(content)
+
+    return encMessage
 
 
-def sendFileFunction(clientSocket: socket.socket(), fileName, encryptedFile, encryptContent, saveMethod):
+def encryptingDictionary(dictionary_path):
+    with open(dictionary_path, 'rb') as dictionary:
+        data = dictionary.read(BUFFER_SIZE)
+        encrypted_content = encryptingFile(data)
+
+        return encrypted_content
+
+
+def sendFileFunction(clientSocket, file_name, encrypt_content, save_method):
 
     # Defining the File Path
-    filePath = f"./../data/{fileName}"
+    filePath = f"./../data/{file_name}"
 
     # Calculating the file size
     fileSize = os.path.getsize(filePath)
 
     # Defining if it is encrypted or not
-    contentFile = "ENCRYPTED" if encryptedFile else "TEXT"
+    contentFile = "ENCRYPTED" if encrypt_content else "TEXT"
 
     # Sending all the details about the file for the server
     clientSocket.send(
-        f"{filePath}{SEPARATOR}{fileSize}{SEPARATOR}{contentFile}{SEPARATOR}{encryptContent}{SEPARATOR}{saveMethod}".encode(FORMAT))
-
-    # Creating a progress bar on the client side to let the user aware about the process
-    progress = tqdm.tqdm(range(
-        fileSize), f"Sending {fileName}", unit="B", unit_scale=True, unit_divisor=1024)
+        f"{filePath}{SEPARATOR}{fileSize}{SEPARATOR}{contentFile}{SEPARATOR}{encrypt_content}{SEPARATOR}{save_method}".encode(FORMAT))
 
     # Opening the file and sending while it is reading the bytes
     with open(filePath, "rb") as file:
         while True:
             # Read the bytes from the file
             bytes_read = file.read(BUFFER_SIZE)
+
             if not bytes_read:
                 # File transmitting is done
                 break
 
+            if encrypt_content == True:
+                bytes_read = encryptingFile(bytes_read)
+
             # Use sendall to assure transimission in
             # busy networks
             clientSocket.sendall(bytes_read)
-            # Update the progress bar
-            progress.update(len(bytes_read))
 
             # Closing the text file
             file.close()
@@ -79,14 +101,13 @@ def sendFileFunction(clientSocket: socket.socket(), fileName, encryptedFile, enc
             # Close the socket
             clientSocket.close()
 
-            return print(f"The {fileName} was sent to the server")
+            finalMessage = f"\nThe {file_name} was encrypted and sent to the server" if encrypt_content else f"The {file_name} was sent to the server"
+
+            return print(finalMessage)
 
 
 def addNewItemDictionary(newItem):
-    # Defining the Dic Path
-    dictonaryPath = "./../data/dictionary.json"
-
-    with open(dictonaryPath, 'r+') as dictonary:
+    with open(MAIN_DICTIONARY_PATH, 'r+') as dictonary:
         # Reading all the content of the json
         data = json.load(dictonary)
 
@@ -104,11 +125,42 @@ def addNewItemDictionary(newItem):
 
 
 def showDictionary():
-    # Defining the Dic Path
-    dictonaryPath = "./../data/dictionary.json"
-    with open(dictonaryPath, 'r') as dictonary:
+    with open(MAIN_DICTIONARY_PATH, 'r') as dictonary:
         data = json.load(dictonary)
         print(data)
+
+
+def sendingDictionary(type, encrypted):
+
+    with open(MAIN_DICTIONARY_PATH, 'r+') as dictonary:
+        # Reading all the content of the default dictionary
+        defaultDictionary = json.load(dictonary)
+
+    if type == "json":
+        user_dictionary = open(USER_DICTIONARY_JSON_PATH, "w")
+        json.dump(defaultDictionary, user_dictionary, indent=6)
+        user_dictionary.close()
+
+        encryptingDictionary(USER_DICTIONARY_JSON_PATH)
+
+    if type == "xml":
+        xml_content = dict2xml(
+            defaultDictionary, wrap='dictionary', indent="   ")
+
+        user_dictionary = open(USER_DICTIONARY_XML_PATH, "w")
+        user_dictionary.write(xml_content)
+        user_dictionary.close()
+
+        encryptingDictionary(USER_DICTIONARY_XML_PATH)
+
+    if type == "binary":
+        user_dictionary = open(USER_DICTIONARY_BIN_PATH, "wb")
+        pickle.dump(defaultDictionary, user_dictionary)
+        user_dictionary.close()
+
+        encryptingDictionary(USER_DICTIONARY_BIN_PATH)
+
+    pass
 
 
 def help():
@@ -121,8 +173,8 @@ if __name__ == "__main__":
 
     # Function to check if the user wrote the file name
     # Function needs to return true or false
-    def checkingFileName(inputFromUser):
-        # Checking if the input of the fileName is blank or not
+    def checkingfile_name(inputFromUser):
+        # Checking if the input of the file_name is blank or not
         if len(inputFromUser) == 0:
             print("Blank options are not available. Please, try again.")
             return False
@@ -151,81 +203,96 @@ if __name__ == "__main__":
                 print("Only 'print' or 'save' answers are available.")
                 return False
 
+    # Function to check if the user is typing the correct input for the Sending Dictionary function
+    def checkingSendingDictionary(inputFromUser):
+        # Necessary to put ".lower()" function because user can type these two inputs in differnt ways
+        match inputFromUser.lower():
+            case "json" | "bin" | "xml":
+                return True
+
+            case _:
+                print("Only 'json', 'xml' or 'bin' answers are available.")
+                return False
+
     # Function to render the User Interface for the user decide what they would like to do.
     def userInterface(clientSocket):
 
         # First command after the client is connected with the server
-        userCommand = input("\nEnter an input ('help' for all the commands): ")
+        user_command = input(
+            "\nEnter an input ('help' for all the commands): ")
 
-        if userCommand == "help":
+        if user_command == "help":
             return help()
 
         # Creating a match system to create different cases for which input from the user
         # If the user need to send a file so it will necessary to validate if the user is sending the name of the file as well
-        if userCommand == "sending-file":
+        if user_command == "sending-file":
 
             # Declaring all the variables that it will be necessary to send to the sendFile Function
-            fileName = ""
-            encryptedFile = False
-            encryptContent = False
-            saveMethod = ""
+            file_name = ""
+            encrypt_content = False
+            save_method = ""
 
             # Asking for the file name for the user
-            fileNameCommand = input(
+            file_name_command = input(
                 "\nPlease, input the name of the file: \n(The file should be located at the 'data' folder) \n")
 
             # Checking if their answer is valid or not
-            if checkingFileName(fileNameCommand) == False:
-                return
-
-            # Asking if the file that they would like to send is encrypted or not
-            encryptedFileCommand = input(
-                "\nIs your file encrypeted or not?: (Yes/ No) \n")
-
-            # Checking if their answer is valid or not
-            if checkingYesOrNoAnswers(encryptedFileCommand) == False:
+            if checkingfile_name(file_name_command) == False:
                 return
 
             # If the file is not encrypted, so it is necessary to ask if the user would like to encrypt or not
-            if encryptedFileCommand.lower() == "no":
-                encryptContentCommand = input(
-                    "\nWould you like to encrypet your file?: (Yes/ No) \n")
+            encrypt_content_command = input(
+                "\nWould you like to encrypet your file?: (Yes/ No) \n")
 
-                # Checking if their answer is valid or not
-                if checkingYesOrNoAnswers(encryptContentCommand) == False:
-                    return
-            # Declaring that the content is encrypt
-            else:
-                encryptContentCommand = True
+            # Checking if their answer is valid or not
+            if checkingYesOrNoAnswers(encrypt_content_command) == False:
+                return
 
             # Asking if the user would like to save or print their results
-            saveMethodCommand = input(
+            save_method_command = input(
                 "\nHow do you like to save or print your final result? (print/ save) \n")
 
             # Checking if their answer is valid or not
-            if checkingSaveMethod(saveMethodCommand) == False:
+            if checkingSaveMethod(save_method_command) == False:
                 return
 
             # Declaring all the variables that it will be necessary to send to the sendFile Function
-            fileName = fileNameCommand
-            saveMethod = saveMethodCommand
-            encryptedFile = True if encryptedFileCommand == "yes" else False
-            encryptContent = True if encryptContentCommand == "yes" else False
+            file_name = file_name_command
+            save_method = save_method_command
+            encrypt_content = True if encrypt_content_command.lower() == "yes" else False
 
             # Sending File function if the inputs from the user
-            sendFileFunction(clientSocket, fileName,
-                             encryptedFile, encryptContent, saveMethod)
+            return sendFileFunction(clientSocket, file_name,
+                                    encrypt_content, save_method)
 
         # Command to populate the dictionary
-        if userCommand == "new-item-dic":
+        if user_command == "new-item-dic":
             # Asking for the new item that will be implemented on the dictionary
-            newItem = input(
+            new_item = input(
                 "\nAdd a new item to the dictionary: \n")
 
-            return addNewItemDictionary(newItem)
+            return addNewItemDictionary(new_item)
 
-        if userCommand == "show-dic":
+        if user_command == "show-dic":
             return showDictionary()
+
+        if user_command == "sending-dictionary":
+            format_dictionary = input(
+                "\Which format you would like to serialise your dictionary? (json/ xml/ bin) \n")
+
+            if checkingSendingDictionary(format_dictionary) == False:
+                return
+
+            encrypt_dictionary_command = input(
+                "\Do you like to encrypt your dictionary before sending to the server? (yes/ no) \n")
+
+            if checkingYesOrNoAnswers(encrypt_dictionary_command) == False:
+                return
+
+            encrypt_dictionary = True if encrypt_dictionary_command.lower() == "yes" else False
+
+            return sendingDictionary(format_dictionary, encrypt_dictionary)
 
         # Returning if the user try to type a different command
         return print("Command incorrect. Please, try it again or type help to check the commands available.")
