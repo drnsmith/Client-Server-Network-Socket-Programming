@@ -1,0 +1,10 @@
+requests
+pep8
+autopep8
+Flask
+Werkzeug
+argparse
+click
+cryptography
+lxml
+dicttoxml
