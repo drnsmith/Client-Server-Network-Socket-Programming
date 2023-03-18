@@ -79,8 +79,8 @@ python client.py --base_url http://127.0.0.1:5000 dict --format xml
 python client.py --base_url http://127.0.0.1:5000 dict```
 ```
 # Contributing
-Patrick Bracebridge
-Sanet Shepperson
+Patrick Bracebridge;
+Sanet Shepperson;
 Dr. Natalya Smith
 
 Pull requests are welcome. 
