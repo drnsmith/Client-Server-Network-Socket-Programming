@@ -1,4 +1,10 @@
-import cProfile
+import cProfile # To review time used of function
+import unittest # review if file exists
+
+class TestEncryption(unittest.Testcase):
+    def test_file_existance(self):
+        self.assertTrue(os.path.exists("encrypted_text.txt"))
+
 from cryptography.fernet import Fernet
 
 key = Fernet.generate_key() # creating key
@@ -34,4 +40,7 @@ decrypted = f.decrypt(encrypted)
 with open("decrypted_text.txt", "wb") as decrypted_file: # writing into a new file
     decrypted_file.write(decrypted)
 
-cProfile.run('encrypt_decrypt'())
+cProfile.run("encrypt_decrypt"()) #give a timing report
+
+if__name__== "__main__"    # Show if the file exists
+   unittest.main()
