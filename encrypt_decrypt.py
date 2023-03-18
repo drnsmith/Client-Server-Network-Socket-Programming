@@ -1,3 +1,4 @@
+import cProfile
 from cryptography.fernet import Fernet
 
 key = Fernet.generate_key() # creating key
@@ -33,3 +34,4 @@ decrypted = f.decrypt(encrypted)
 with open("decrypted_text.txt", "wb") as decrypted_file: # writing into a new file
     decrypted_file.write(decrypted)
 
+cProfile.run('encrypt_decrypt'())
