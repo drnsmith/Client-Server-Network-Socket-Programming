@@ -56,6 +56,11 @@ python -m autopep8 --in-place --aggressive --aggressive --recursive .
 pep8 . --ignore=E501
 ```
 # Testing
+
+cProfile is showcased
+assertIsInstance is showcased
+
+
 With socket programming, we tested code using:
 ```
 python -m unittest
@@ -74,8 +79,9 @@ python client.py --base_url http://127.0.0.1:5000 dict --format xml
 python client.py --base_url http://127.0.0.1:5000 dict```
 ```
 # Contributing
-WE NEED TO PUT OUR NAMES HERE..
-IN ALPHAB. ORDER?
+Patrick Bracebridge
+Sanet Shepperson
+Dr. Natalya Smith
 
 Pull requests are welcome. 
 Please update tests as appropriate. 
