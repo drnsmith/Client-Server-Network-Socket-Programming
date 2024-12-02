@@ -1,6 +1,6 @@
 ## **Client/Server Network Project**
 
-#### **Overview**
+### **Overview**
 This project builds a **client/server network** where the client can:
 1. Create a dictionary, populate it with data, serialise it, and send it to a server.
 2. Create a text file, optionally encrypt it, and send it to the server.
@@ -81,7 +81,35 @@ python -m unittest
 
 ### Contributors
 Natalya Smith; Patrick Bracebridge; Sanet Shepperson
-Contributions are welcome! Please submit a pull request and include tests for any new functionality.
+Contributions are welcome! If you have ideas or improvements to share, please follow these steps:
+
+1. **Fork the Repository:**
+Create your own copy of the repository by clicking the "Fork" button at the top right of this page.
+
+2. **Create a Feature Branch:**
+Work on your changes in a dedicated branch.
+
+```bash
+git checkout -b feature/YourFeatureName
+```
+3. **Commit Your Changes:**
+Write clear and concise commit messages explaining what you’ve done.
+
+```bash
+git commit -m "Add YourFeatureName"
+```
+4. **Push Your Changes**:
+Push your feature branch to your forked repository.
+```bash
+git push origin feature/YourFeatureName
+```
+5. **Open a Pull Request**:
+Submit your changes to the main repository by opening a pull request (PR). Ensure your PR description explains your changes clearly.
+
+6. **Review and Feedback**:
+We will review your PR and may suggest improvements before merging it into the main branch.
+
+Thank you for your interest in contributing!
 
 ### License
 This project is licensed under the MIT License. See the LICENSE file for details.
