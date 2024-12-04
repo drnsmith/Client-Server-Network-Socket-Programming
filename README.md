@@ -1,6 +1,6 @@
-## **Client/Server Network Project**
+### **Secure Communication Framework: Client-Server System with Python and Cryptography**
 
-### **Overview**
+#### **Overview**
 This project builds a **client/server network** where the client can:
 1. Create a dictionary, populate it with data, serialise it, and send it to a server.
 2. Create a text file, optionally encrypt it, and send it to the server.
