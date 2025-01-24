@@ -54,6 +54,7 @@ In a world reliant on interconnected systems, client/server networks play a cruc
 ```bash
   pip install -r requirements.txt
 ```
+---
 ### Running the Client and Server
  1. **Start the server:**
  - Run the server script to begin listening for incoming data.
@@ -67,17 +68,19 @@ python server.py
 ```bash
 python client.py
 ```
+---
 ### Testing
 This project includes unit tests to ensure functionality. Run the tests using:
 ```bash
 python -m unittest
 ```
-
+---
 ### Project Structure
  - `client.py`: Handles data creation, serialisation, and transmission from the client to the server.
  - `server.py`: Processes incoming data from the client and handles encryption/decryption.
  - `requirements.txt`: Lists required Python libraries.
  - `tests/`: Contains unit tests for validating core functionalities.
+---
 
 ### Contributors
 Natalya Smith; Patrick Bracebridge; Sanet Shepperson
@@ -111,6 +114,16 @@ We will review your PR and may suggest improvements before merging it into the m
 
 Thank you for your interest in contributing!
 
+---
+## Repository History Cleaned
+
+As part of preparing this repository for collaboration, its commit history has been cleaned. This action ensures a more streamlined project for contributors and removes outdated or redundant information in the history. 
+
+The current state reflects the latest progress as of 24/01/2025.
+
+For questions regarding prior work or additional details, please contact the author.
+
+---
 ### License
 This project is licensed under the MIT License. See the LICENSE file for details.
 
